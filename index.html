@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Star Wars</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+</head>
+<body>
+<div id="app">
+    <div class="container mt-4">
+        <h2>Star Wars</h2>
+        <section v-if="!loader" class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </section>
+        <section v-else>
+            <div class="form-group">
+                <input type="search"  @input="filterPeoples" placeholder="Search" class="form-control" id="usr">
+            </div>       
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Height</th>
+                    <th>Hair</th>
+                    <th>Skin</th>
+                </tr>
+                </thead>
+                <tbody v-if="peoples_filter">
+                    <tr v-for="(people, index) in peoples_filter" :key="index">
+                        <td>{{ people.name }}</td>
+                        <td>{{ people.height }}</td>
+                        <td>{{ people.hair_color }}</td>
+                        <td>{{ people.skin_color }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+var app = new Vue({
+  el: '#app',
+  data: {
+    peoples: [],
+    peoples_filter: [],
+    loader: false
+  },
+  methods: {
+    async getPeoples() {
+        this.loader = false
+        let peoples = await fetch(`https://swapi.dev/api/people/`)
+        peoples = await peoples.json()
+        this.peoples = peoples.results
+        await this.recursive(peoples.next)
+        this.peoples_filter = this.peoples
+        this.loader = true
+
+    },
+    async recursive(url) {
+        if (url) {
+            let addPeoples = await fetch(url)
+            addPeoples = await addPeoples.json()
+            this.peoples = this.peoples.concat(addPeoples.results)
+           await this.recursive(addPeoples.next)
+        }
+    },
+    filterPeoples(e) {
+        let value = e.target.value
+        if (value.length) {
+            this.peoples_filter = this.peoples.filter(item => item.name.toLowerCase().indexOf(value.toLowerCase()) > -1)
+        } else {
+            this.peoples_filter = this.peoples
+        }
+    }
+  },
+  mounted() {
+    this.getPeoples()
+  }
+})
+
+</script>
+</body>
+</html>
